@@ -1,0 +1,75 @@
+{
+  "cookies": [
+    {
+      "domain": ".kognity.com",
+      "expiry": 1793116750,
+      "httpOnly": false,
+      "name": "ph_phc_UMWTMCKGQJ4dzF8btBf0gpI0E5JbIQpUmaaPiOGk5Bs_posthog",
+      "path": "/",
+      "sameSite": "Lax",
+      "secure": true,
+      "value": "%7B%22distinct_id%22%3A%221435553%22%2C%22%24sesid%22%3A%5B1761580750832%2C%22019a2665-0d08-7e9d-8e5e-519581ec4aad%22%2C1761580748040%5D%2C%22%24epp%22%3Atrue%2C%22%24initial_person_info%22%3A%7B%22r%22%3A%22https%3A%2F%2Fapp.kognity.com%2F%22%2C%22u%22%3A%22https%3A%2F%2Fapp.kognity.com%2Fstudy%2Fapp%2Fdashboard%22%7D%7D"
+    },
+    {
+      "domain": ".kognity.com",
+      "expiry": 1796140748,
+      "httpOnly": false,
+      "name": "ab.storage.sessionId.1e8b9c76-7b96-4d80-8ce1-b16e762c42db",
+      "path": "/",
+      "sameSite": "Lax",
+      "secure": false,
+      "value": "g%3A50029e2b-459a-6b01-6f8e-fef4910d7976%7Ce%3A1761582548064%7Cc%3A1761580748060%7Cl%3A1761580748064"
+    },
+    {
+      "domain": ".kognity.com",
+      "expiry": 1796140748,
+      "httpOnly": false,
+      "name": "ab.storage.userId.1e8b9c76-7b96-4d80-8ce1-b16e762c42db",
+      "path": "/",
+      "sameSite": "Lax",
+      "secure": false,
+      "value": "g%3A1435553%7Ce%3Aundefined%7Cc%3A1761580748060%7Cl%3A1761580748061"
+    },
+    {
+      "domain": "app.kognity.com",
+      "expiry": 1793116746,
+      "httpOnly": true,
+      "name": "browsercheck80fb234e389ed23a59383a02e0e74dbc44f00e09",
+      "path": "/",
+      "sameSite": "Lax",
+      "secure": true,
+      "value": "1:1vDPcg:TxhK9NIVq0Vx3aSPRQGyBiupj_dNoKxMYWEqZlIgevw"
+    },
+    {
+      "domain": ".kognity.com",
+      "expiry": 1796140748,
+      "httpOnly": false,
+      "name": "ab.storage.deviceId.1e8b9c76-7b96-4d80-8ce1-b16e762c42db",
+      "path": "/",
+      "sameSite": "Lax",
+      "secure": false,
+      "value": "g%3Aa6a9d6b0-121f-564b-0bcc-957ea5eb8778%7Ce%3Aundefined%7Cc%3A1761580748062%7Cl%3A1761580748062"
+    },
+    {
+      "domain": ".kognity.com",
+      "expiry": 1764172748,
+      "httpOnly": false,
+      "name": "mp_fe61a95ae8a6f78e489f3a251932427e_mixpanel",
+      "path": "/",
+      "sameSite": "Lax",
+      "secure": false,
+      "value": "%7B%22distinct_id%22%3A%20%221435553%22%2C%22%24device_id%22%3A%20%2219a26650cfd40a-0c3dbdadb774dd-26061851-15f900-19a26650cff15a%22%2C%22%24initial_referrer%22%3A%20%22https%3A%2F%2Fapp.kognity.com%2F%22%2C%22%24initial_referring_domain%22%3A%20%22app.kognity.com%22%2C%22%24user_id%22%3A%20%221435553%22%7D"
+    },
+    {
+      "domain": "app.kognity.com",
+      "expiry": 1762790347,
+      "httpOnly": true,
+      "name": "sessionid",
+      "path": "/",
+      "sameSite": "Lax",
+      "secure": true,
+      "value": "ulndhxpr7tybzyl8l2bdxp356l61ytxj"
+    }
+  ],
+  "timestamp": "2025-10-27T16:59:11.113155"
+}
