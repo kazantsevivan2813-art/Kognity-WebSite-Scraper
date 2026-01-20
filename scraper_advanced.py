@@ -97,7 +97,112 @@ class AdvancedWebsiteScraper:
         self.wait = WebDriverWait(self.driver, WAIT_TIMES['element_load'])
         self.log("✓ Chrome driver ready")
 
+    def find_element_with_fallbacks(self, selectors_list):
+        """Try multiple selectors until one works"""
+        for by_type, selector in selectors_list:
+            try:
+                element = self.wait.until(
+                    EC.presence_of_element_located((by_type, selector))
+                )
+                return element
+            except:
+                continue
+        return None
+        
+    def find_elements_with_fallbacks(self, selectors_list):
+        """Try multiple selectors to find elements"""
+        for by_type, selector in selectors_list:
+            try:
+                elements = self.driver.find_elements(by_type, selector)
+                if elements:
+                    return elements
+            except:
+                continue
+        return []
 
+    def safe_click(self, element, description="element"):
+        """Safely click an element with multiple fallback strategies"""
+        try:
+            # Log element details
+            try:
+                tag = element.tag_name
+                classes = element.get_attribute('class') or ''
+                aria_label = element.get_attribute('aria-label') or ''
+                self.log(f"  Attempting to click: <{tag}> class='{classes[:50]}' aria-label='{aria_label[:50]}'")
+            except:
+                pass
+            
+            # Check if element is displayed and enabled
+            try:
+                if not element.is_displayed():
+                    self.log(f"  ⚠ Element not displayed", 'WARN')
+                if not element.is_enabled():
+                    self.log(f"  ⚠ Element not enabled", 'WARN')
+            except:
+                pass
+            
+            # Strategy 1: Scroll into view and wait, then normal click
+            try:
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+                time.sleep(0.5)
+                element.click()
+                self.log(f"  ✓ Clicked using normal click")
+                return True
+            except Exception as e1:
+                self.log(f"  Strategy 1 failed: {str(e1)[:50]}")
+            
+            # Strategy 2: JavaScript click
+            try:
+                self.driver.execute_script("arguments[0].click();", element)
+                self.log(f"  ✓ Clicked using JavaScript")
+                return True
+            except Exception as e2:
+                self.log(f"  Strategy 2 failed: {str(e2)[:50]}")
+            
+            # Strategy 3: Remove aria-expanded and try click
+            try:
+                self.driver.execute_script("""
+                    arguments[0].removeAttribute('aria-expanded');
+                    arguments[0].removeAttribute('tabindex');
+                    arguments[0].click();
+                """, element)
+                self.log(f"  ✓ Clicked after removing attributes")
+                return True
+            except Exception as e3:
+                self.log(f"  Strategy 3 failed: {str(e3)[:50]}")
+            
+            # Strategy 4: Action chains
+            try:
+                from selenium.webdriver.common.action_chains import ActionChains
+                ActionChains(self.driver).move_to_element(element).click().perform()
+                self.log(f"  ✓ Clicked using ActionChains")
+                return True
+            except Exception as e4:
+                self.log(f"  Strategy 4 failed: {str(e4)[:50]}")
+            
+            # Strategy 5: Force click with JavaScript event
+            try:
+                self.driver.execute_script("""
+                    var element = arguments[0];
+                    var event = new MouseEvent('click', {
+                        view: window,
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    element.dispatchEvent(event);
+                """, element)
+                self.log(f"  ✓ Clicked using MouseEvent dispatch")
+                return True
+            except Exception as e5:
+                self.log(f"  Strategy 5 failed: {str(e5)[:50]}")
+                
+            self.log(f"✗ Could not click {description}", 'WARN')
+            return False
+            
+        except Exception as e:
+            self.log(f"✗ Error clicking {description}: {e}", 'WARN')
+            return False
+            
 if __name__ == "__main__":
     scraper = AdvancedWebsiteScraper()
     scraper.run()
