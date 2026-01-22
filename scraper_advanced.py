@@ -202,7 +202,136 @@ class AdvancedWebsiteScraper:
         except Exception as e:
             self.log(f"✗ Error clicking {description}: {e}", 'WARN')
             return False
+    
+    def save_cookies(self):
+        """Save cookies to file with timestamp"""
+        cookies = self.driver.get_cookies()
+        cookie_data = {
+            'cookies': cookies,
+            'timestamp': datetime.now().isoformat()
+        }
+        with open(COOKIE_FILE, 'w') as f:
+            json.dump(cookie_data, f, indent=2)
+        self.log("✓ Cookies saved")
+        
+    def load_cookies(self):
+        """Load cookies from file if they exist and are not expired"""
+        if not os.path.exists(COOKIE_FILE):
+            return False
             
+        try:
+            with open(COOKIE_FILE, 'r') as f:
+                cookie_data = json.load(f)
+                
+            # Check if cookies are expired
+            saved_time = datetime.fromisoformat(cookie_data['timestamp'])
+            age = datetime.now() - saved_time
+            
+            if age > timedelta(days=COOKIE_EXPIRY_DAYS):
+                self.log(f"✗ Cookies expired ({age.days} days old)")
+                return False
+                
+            # Load cookies
+            self.driver.get(WEBSITE_URL)
+            time.sleep(WAIT_TIMES['page_load'])
+            
+            for cookie in cookie_data['cookies']:
+                if 'expiry' in cookie:
+                    cookie['expiry'] = int(cookie['expiry'])
+                try:
+                    self.driver.add_cookie(cookie)
+                except Exception as e:
+                    self.log(f"Warning: Could not add cookie: {e}", 'WARN')
+                    
+            self.log(f"✓ Cookies loaded ({age.days} days old)")
+            return True
+        except Exception as e:
+            self.log(f"✗ Error loading cookies: {e}", 'ERROR')
+            return False
+
+    def login(self):
+        """Login to the website (supports multi-step login)"""
+        self.log("Attempting to login...")
+        self.driver.get(WEBSITE_URL)
+        time.sleep(WAIT_TIMES['page_load'])
+        
+        try:
+            # Step 1: Find and fill email field
+            email_field = self.find_element_with_fallbacks(LOGIN_SELECTORS['email_field'])
+            if not email_field:
+                self.log("✗ Could not find email field", 'ERROR')
+                return False
+                
+            email_field.clear()
+            email_field.send_keys(EMAIL)
+            self.log("✓ Email entered")
+            
+            # Check if password field is on the same page
+            password_field = None
+            try:
+                password_field = self.driver.find_element(By.CSS_SELECTOR, 'input[type="password"]')
+                self.log("✓ Password field found on same page")
+            except:
+                # Multi-step login - need to click Continue/Next first
+                self.log("Password field not on same page, looking for Continue button...")
+                
+                continue_button = self.find_element_with_fallbacks(LOGIN_SELECTORS['login_button'])
+                if continue_button:
+                    self.safe_click(continue_button, "Continue button")
+                    time.sleep(WAIT_TIMES['page_load'])
+                    self.log("✓ Moved to password page")
+                else:
+                    # Try pressing Enter
+                    from selenium.webdriver.common.keys import Keys
+                    email_field.send_keys(Keys.RETURN)
+                    time.sleep(WAIT_TIMES['page_load'])
+                    self.log("✓ Pressed Enter on email field")
+            
+            # Step 2: Find and fill password field (may be on new page)
+            if not password_field:
+                password_field = self.find_element_with_fallbacks(LOGIN_SELECTORS['password_field'])
+                
+            if not password_field:
+                self.log("✗ Could not find password field", 'ERROR')
+                return False
+                
+            password_field.clear()
+            password_field.send_keys(PASSWORD)
+            self.log("✓ Password entered")
+            
+            # Step 3: Find and click login button
+            login_button = self.find_element_with_fallbacks(LOGIN_SELECTORS['login_button'])
+            if login_button:
+                self.safe_click(login_button, "Login button")
+                self.log("✓ Login button clicked")
+            else:
+                # Try pressing Enter on password field
+                from selenium.webdriver.common.keys import Keys
+                password_field.send_keys(Keys.RETURN)
+                self.log("✓ Pressed Enter on password field")
+            
+            # Wait for dashboard to load
+            self.log("Waiting for dashboard to load...")
+            time.sleep(WAIT_TIMES['after_login'])
+            
+            # Verify we're logged in
+            current_url = self.driver.current_url
+            if 'login' not in current_url.lower():
+                self.log(f"✓ Login successful! Current URL: {current_url}")
+                self.save_cookies()
+                return True
+            else:
+                self.log(f"⚠ Still on login page: {current_url}", 'WARN')
+                time.sleep(3)  # Extra wait in case of slow loading
+                self.save_cookies()
+                return True  # Try to continue anyway
+            
+        except Exception as e:
+            self.log(f"✗ Login failed: {e}", 'ERROR')
+            import traceback
+            self.log(traceback.format_exc(), 'ERROR')
+            return False
+
 if __name__ == "__main__":
     scraper = AdvancedWebsiteScraper()
     scraper.run()
