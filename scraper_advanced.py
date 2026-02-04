@@ -331,7 +331,90 @@ class AdvancedWebsiteScraper:
             import traceback
             self.log(traceback.format_exc(), 'ERROR')
             return False
-
+    def is_logged_in(self):
+        """Check if user is currently logged in"""
+        try:
+            indicator = self.find_element_with_fallbacks(DASHBOARD_SELECTORS['logged_in_indicator'])
+            return indicator is not None
+        except:
+            return False
+    
+    def ensure_logged_in(self):
+        """Ensure user is logged in, using cookies if available"""
+        # Try loading cookies first
+        if self.load_cookies():
+            self.driver.refresh()
+            time.sleep(WAIT_TIMES['page_load'])
+            
+            # Log current page
+            self.log(f"After cookie load, current URL: {self.driver.current_url}")
+            
+            # Check if we're logged in
+            current_url = self.driver.current_url.lower()
+            if 'login' not in current_url:
+                self.log("✓ Using existing session (not on login page)")
+                
+                # Make sure we're on a page where we can find classes
+                # For Kognity, ensure we're on the main app page
+                if '/study/' in current_url or '/app/' in current_url:
+                    self.log("✓ Already on study/app page")
+                else:
+                    # Navigate to the main page to see classes
+                    self.log("Navigating to ensure classes are visible...")
+                    # Try to find a home/dashboard link or just reload
+                    self.driver.get(WEBSITE_URL)
+                    time.sleep(WAIT_TIMES['page_load'])
+                    self.log(f"Now at: {self.driver.current_url}")
+                
+                return True
+            else:
+                self.log("✗ Cookies invalid, still on login page")
+                
+        return self.login()
+        
+    def navigate_to_classes_page(self):
+        """Ensure we're on a page where classes are visible"""
+        try:
+            current_url = self.driver.current_url.lower()
+            
+            # Check if we're already on a page with classes
+            if 'class' in current_url or 'course' in current_url or 'dashboard' in current_url:
+                self.log("✓ Already on a page with classes")
+                return True
+            
+            # Try to find and click on a link to classes/courses/dashboard
+            self.log("Looking for link to classes page...")
+            possible_links = [
+                (By.XPATH, '//a[contains(translate(text(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "class")]'),
+                (By.XPATH, '//a[contains(translate(text(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "course")]'),
+                (By.XPATH, '//a[contains(translate(text(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "dashboard")]'),
+                (By.XPATH, '//a[contains(@href, "/classes")]'),
+                (By.XPATH, '//a[contains(@href, "/courses")]'),
+            ]
+            
+            for by_type, selector in possible_links:
+                try:
+                    link = self.driver.find_element(by_type, selector)
+                    if link:
+                        self.log(f"✓ Found link: {link.text}")
+                        self.safe_click(link, "classes page link")
+                        time.sleep(WAIT_TIMES['page_load'])
+                        self.log(f"Navigated to: {self.driver.current_url}")
+                        return True
+                except:
+                    continue
+            
+            # If no specific link found, just ensure we're at base URL
+            if self.driver.current_url != WEBSITE_URL:
+                self.log("Navigating to base URL...")
+                self.driver.get(WEBSITE_URL)
+                time.sleep(WAIT_TIMES['page_load'])
+            
+            return True
+            
+        except Exception as e:
+            self.log(f"Error navigating to classes page: {e}", 'WARN')
+            return False
 if __name__ == "__main__":
     scraper = AdvancedWebsiteScraper()
     scraper.run()
